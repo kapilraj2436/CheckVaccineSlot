@@ -35,7 +35,7 @@ while True:  # It will check in each Hour
     for pin_code in configs['pin_cods']:
         with requests.session() as s:
             api = configs['api_url'] % (pin_code, _date)
-            print(api)
+         
             hdr = configs['hdr']
             res = s.get(api, headers=hdr)
             res = res.json()
