@@ -1,10 +1,11 @@
 import requests
-import time
+import datetime
 import smtplib
+import time
 
 configs = {
-    "pin_cods": ["458990", "458001"], # List of pin codes of your Area
-    "smtp_email":  "",  # Your Email ID
+    "pin_cods": ["458990", "458001"],  # List of pin codes of your Area
+    "smtp_email": "",  # Your Email ID
     "smtp_pass": "",  # Password of your Email ID
     "recipient": "",  # Recipient Email ID
     "api_url": f"https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByPin?pincode=%s&date=%s",
@@ -28,29 +29,34 @@ def send_mail(body, smtp_email, smtp_pass, recipient):
         smtpserver.sendmail(smtp_email, recipient, body)
     print('Mail Sent #########')
 
+
 print('####### Start Running')
 
 while True:  # It will check in each Hour
-    _date = time.strftime("%d/%m/%Y")
-    for pin_code in configs['pin_cods']:
-        with requests.session() as s:
-            api = configs['api_url'] % (pin_code, _date)
-         
-            hdr = configs['hdr']
-            res = s.get(api, headers=hdr)
-            res = res.json()
-            for center in res['centers']:
-                for session in center['sessions']:
-                    if (session['min_age_limit'] < 45) & (session['available_capacity'] > 0):
-                        body = f"Subject: Congrats! You got a slot Alert! for %s" % (center['name'])
-                        body = body + '\n' + 'Date- ' + _date
-                        body = body + '\n' + 'Centre Name - ' + center['name']
-                        body = body + '\n' + 'Centre Address - ' + center['address']
-                        body = body + '\n' + 'Total Vaccine Doses - ' + str(session['available_capacity'])
-                        body = body + '\n' + 'available capacity dose 1 - ' + str(session['available_capacity_dose1'])
-                        body = body + '\n' + 'available capacity dose 2 - ' + str(session['available_capacity_dose2'])
-                        body = body + '\n' + 'Click Here to book your slot Now - ' + 'https://www.cowin.gov.in/home'
-                        body = body + '\n' + ' Regards, \n Kapil Chouhan \n www.about.me/kchouhan  '
-                        send_mail(body, configs['smtp_email'], configs['smtp_pass'], configs['recipient'])
+    today_date = datetime.datetime.today().strftime("%d/%m/%Y")
+    tomorrow_date = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%d/%m/%Y")
+    for _date in ([today_date, tomorrow_date]):
+        for pin_code in configs['pin_cods']:
+            with requests.session() as s:
+                api = configs['api_url'] % (pin_code, _date)
+                print(api)
+                hdr = configs['hdr']
+                res = s.get(api, headers=hdr)
+                res = res.json()
+                for center in res['centers']:
+                    for session in center['sessions']:
+                        if (session['min_age_limit'] < 45) & (session['available_capacity'] > 0):
+                            body = f"Subject: Congrats! You got a slot Alert! for %s" % (center['name'])
+                            body = body + '\n' + 'Date- ' + _date
+                            body = body + '\n' + 'Centre Name - ' + center['name']
+                            body = body + '\n' + 'Centre Address - ' + center['address']
+                            body = body + '\n' + 'Total Vaccine Doses - ' + str(session['available_capacity'])
+                            body = body + '\n' + 'available capacity dose 1 - ' + str(
+                                session['available_capacity_dose1'])
+                            body = body + '\n' + 'available capacity dose 2 - ' + str(
+                                session['available_capacity_dose2'])
+                            body = body + '\n' + 'Click Here to book your slot Now - ' + 'https://www.cowin.gov.in/home'
+                            body = body + '\n' + ' Regards, \n Kapil Chouhan \n www.about.me/kchouhan  '
+                            send_mail(body, configs['smtp_email'], configs['smtp_pass'], configs['recipient'])
 
-    time.sleep(100)
+    time.sleep(60)
